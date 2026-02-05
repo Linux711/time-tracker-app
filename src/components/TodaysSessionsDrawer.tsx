@@ -8,13 +8,12 @@ import {
   Dimensions,
   StyleSheet,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import { formatDuration } from '../utils/timeFormatters';
 import colors from '../constants/colors';
 import { Session, Activity } from '../types';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: WINDOW_HEIGHT } = Dimensions.get('window');
 
 interface TodaysSessionsDrawerProps {
   sessions: Session[];
@@ -27,33 +26,29 @@ export const TodaysSessionsDrawer: React.FC<TodaysSessionsDrawerProps> = ({
   sessions,
   activities,
 }) => {
-  const insets = useSafeAreaInsets();
-
-  // Calculate positions accounting for safe area
-  const collapsedHeight = 60;
-  const halfHeight = Math.min(SCREEN_HEIGHT * 0.4, 200 + (3 * 60));
-  const expandedHeight = Math.min(SCREEN_HEIGHT * 0.8, 200 + (sessions.length * 60));
-
-  // Position relative to screen bottom, accounting for safe area
-  const screenBottom = SCREEN_HEIGHT;
-  const safeBottom = insets.bottom;
+  // Calculate positions for different states
+  const collapsedHeight = 60; // Just the handle
+  const halfHeight = Math.min(WINDOW_HEIGHT * 0.4, 200 + (3 * 60)); // Show 3 sessions
+  const expandedHeight = Math.min(WINDOW_HEIGHT * 0.8, 200 + (sessions.length * 60)); // Show all
 
   const [drawerState, setDrawerState] = useState<DrawerState>('collapsed');
-  const [currentPosition, setCurrentPosition] = useState(screenBottom - collapsedHeight - safeBottom);
-  const translateY = useRef(new Animated.Value(screenBottom - collapsedHeight - safeBottom)).current;
+  const [currentPosition, setCurrentPosition] = useState(WINDOW_HEIGHT - collapsedHeight);
+  const translateY = useRef(new Animated.Value(WINDOW_HEIGHT - collapsedHeight)).current;
 
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: () => true,
       onPanResponderMove: (_, gesture) => {
         const newPosition = currentPosition + gesture.dy;
-        const minPosition = screenBottom - expandedHeight - safeBottom;
-        const maxPosition = screenBottom - collapsedHeight - safeBottom;
-        const clampedPosition = Math.max(minPosition, Math.min(maxPosition, newPosition));
+        const clampedPosition = Math.max(
+          WINDOW_HEIGHT - expandedHeight,
+          Math.min(WINDOW_HEIGHT - collapsedHeight, newPosition)
+        );
         translateY.setValue(clampedPosition);
       },
       onPanResponderRelease: (_, gesture) => {
         const velocity = gesture.vy;
+        const currentY = currentPosition;
 
         // Determine target state based on position and velocity
         let targetState: DrawerState;
@@ -62,24 +57,23 @@ export const TodaysSessionsDrawer: React.FC<TodaysSessionsDrawerProps> = ({
         if (velocity > 0.5) {
           // Dragging down - collapse
           targetState = 'collapsed';
-          targetY = screenBottom - collapsedHeight - safeBottom;
+          targetY = WINDOW_HEIGHT - collapsedHeight;
         } else if (velocity < -0.5) {
           // Dragging up - expand
           targetState = 'expanded';
-          targetY = screenBottom - expandedHeight - safeBottom;
+          targetY = WINDOW_HEIGHT - expandedHeight;
         } else {
           // Based on position
-          const currentY = currentPosition;
-          const progress = (screenBottom - safeBottom - currentY) / (expandedHeight - collapsedHeight);
+          const progress = (WINDOW_HEIGHT - currentY) / (expandedHeight - collapsedHeight);
           if (progress < 0.3) {
             targetState = 'collapsed';
-            targetY = screenBottom - collapsedHeight - safeBottom;
+            targetY = WINDOW_HEIGHT - collapsedHeight;
           } else if (progress < 0.7) {
             targetState = 'half';
-            targetY = screenBottom - halfHeight - safeBottom;
+            targetY = WINDOW_HEIGHT - halfHeight;
           } else {
             targetState = 'expanded';
-            targetY = screenBottom - expandedHeight - safeBottom;
+            targetY = WINDOW_HEIGHT - expandedHeight;
           }
         }
 
@@ -168,7 +162,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 1000,
     backgroundColor: colors.colors.cardBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -184,11 +177,10 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   handle: {
-    width: 60,
-    height: 6,
-    backgroundColor: colors.colors.textLight,
-    borderRadius: 3,
-    marginBottom: 8,
+    width: 40,
+    height: 4,
+    backgroundColor: colors.colors.border,
+    borderRadius: 2,
   },
   badge: {
     position: 'absolute',
@@ -218,7 +210,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sessionsList: {
-    maxHeight: SCREEN_HEIGHT * 0.6,
+    maxHeight: WINDOW_HEIGHT * 0.6,
   },
   sessionItem: {
     flexDirection: 'row',
