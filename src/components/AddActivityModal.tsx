@@ -25,16 +25,11 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   const [selectedColor, setSelectedColor] = useState('');
   const [weeklyGoal, setWeeklyGoal] = useState('');
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (name.trim() && selectedColor) {
-      try {
-        const goal = weeklyGoal ? parseFloat(weeklyGoal) : undefined;
-        await onAdd(name.trim(), selectedColor, goal);
-        handleClose(); // Reset state and close modal after successful save
-      } catch (error) {
-        // Error is handled by the parent component
-        console.error('Error saving activity:', error);
-      }
+      const goal = weeklyGoal && weeklyGoal.trim() ? parseFloat(weeklyGoal.trim()) : undefined;
+      const validGoal = goal && !isNaN(goal) ? goal : undefined;
+      onAdd(name.trim(), selectedColor, validGoal);
     }
   };
 
@@ -53,76 +48,80 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
       onRequestClose={handleClose}
     >
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Add New Activity</Text>
-        </View>
-
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Activity Name Input */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Activity Name</Text>
-            <TextInput
-              style={styles.textInput}
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter activity name"
-              placeholderTextColor={colors.colors.textLight}
-            />
+          <View style={styles.header}>
+            <Text style={styles.title}>Add New Activity</Text>
           </View>
 
-          {/* Color Selection */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Choose a Color</Text>
-            <View style={styles.colorRow}>
-              {colors.activityColors.map((color) => (
-                <TouchableOpacity
-                  key={color}
-                  style={[
-                    styles.colorButton,
-                    { backgroundColor: color },
-                    selectedColor === color && styles.colorButtonSelected,
-                  ]}
-                  onPress={() => setSelectedColor(color)}
-                >
-                  {selectedColor === color && (
-                    <View style={styles.colorCheckmark} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Weekly Goal Input */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Weekly Goal (hours)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={weeklyGoal}
-              onChangeText={setWeeklyGoal}
-              placeholder="Optional"
-              placeholderTextColor={colors.colors.textLight}
-              keyboardType="numeric"
-            />
-          </View>
-        </ScrollView>
-
-        {/* Buttons */}
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              !(name.trim() && selectedColor) && styles.saveButtonDisabled,
-            ]}
-            onPress={handleSave}
-            disabled={!(name.trim() && selectedColor)}
+          <ScrollView 
+            style={styles.content} 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
           >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
+            {/* Activity Name Input */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Activity Name</Text>
+              <TextInput
+                style={styles.textInput}
+                value={name}
+                onChangeText={setName}
+                placeholder="Enter activity name"
+                placeholderTextColor={colors.colors.textLight}
+              />
+            </View>
+
+            {/* Color Selection */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Choose a Color</Text>
+              <View style={styles.colorRow}>
+                {colors.activityColors.map((color) => (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.colorButton,
+                      { backgroundColor: color },
+                      selectedColor === color && styles.colorButtonSelected,
+                    ]}
+                    onPress={() => setSelectedColor(color)}
+                  >
+                    {selectedColor === color && (
+                      <View style={styles.colorCheckmark} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Weekly Goal Input */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Weekly Goal (hours)</Text>
+              <TextInput
+                style={styles.textInput}
+                value={weeklyGoal}
+                onChangeText={setWeeklyGoal}
+                placeholder="Optional"
+                placeholderTextColor={colors.colors.textLight}
+                keyboardType="numeric"
+              />
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.saveButton,
+                  !(name.trim() && selectedColor) && styles.saveButtonDisabled,
+                ]}
+                onPress={handleSave}
+                disabled={!(name.trim() && selectedColor)}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
         </View>
-      </View>
     </Modal>
   );
 };
@@ -147,7 +146,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   section: {
     marginBottom: 24,
@@ -189,33 +191,35 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: colors.colors.text,
   },
-  footer: {
+  buttonContainer: {
     flexDirection: 'row',
-    padding: 20,
-    paddingBottom: 40,
-    borderTopWidth: 1,
-    borderTopColor: colors.colors.border,
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    marginTop: 8,
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 12,
-    marginRight: 10,
-    borderRadius: 8,
+    paddingVertical: 10,
+    marginRight: 8,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.colors.border,
     backgroundColor: colors.colors.cardBackground,
   },
   cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
     color: colors.colors.text,
     textAlign: 'center',
   },
   saveButton: {
     flex: 1,
-    paddingVertical: 12,
-    marginLeft: 10,
-    borderRadius: 8,
+    paddingVertical: 10,
+    marginLeft: 8,
+    borderRadius: 6,
     backgroundColor: colors.colors.primary,
   },
   saveButtonDisabled: {

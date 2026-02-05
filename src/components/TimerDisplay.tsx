@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { formatSeconds } from '../utils/timeFormatters';
 import colors from '../constants/colors';
@@ -7,12 +7,18 @@ import colors from '../constants/colors';
 interface TimerDisplayProps {
   elapsedTime: number;
   onStop: () => void;
+  onDelete?: (activityId: string, activityName: string) => void;
+  activityName?: string;
+  activityId?: string;
   style?: any;
 }
 
 export const TimerDisplay: React.FC<TimerDisplayProps> = ({
   elapsedTime,
   onStop,
+  onDelete,
+  activityName,
+  activityId,
   style,
 }) => {
   const size = 200;
@@ -22,6 +28,26 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
 
   // Create a pulsing effect based on elapsed time
   const pulseOpacity = 0.3 + 0.2 * Math.sin(elapsedTime * 0.1);
+
+  const handleDelete = () => {
+    if (onDelete && activityId && activityName) {
+      Alert.alert(
+        'Delete Activity',
+        `Are you sure you want to delete "${activityName}"? This action cannot be undone.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              onStop(); // Stop the timer first
+              onDelete(activityId, activityName);
+            },
+          },
+        ]
+      );
+    }
+  };
 
   return (
     <View style={[styles.container, style]}>
@@ -57,9 +83,16 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
         </View>
       </View>
 
-      <TouchableOpacity style={styles.stopButton} onPress={onStop}>
-        <Text style={styles.stopButtonText}>Stop Timer</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.stopButton} onPress={onStop}>
+          <Text style={styles.stopButtonText}>Stop Timer</Text>
+        </TouchableOpacity>
+        {onDelete && activityId && activityName && (
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Text style={styles.deleteButtonText}>Delete Activity</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };
@@ -93,14 +126,29 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  stopButton: {
+  buttonContainer: {
+    flexDirection: 'row',
     marginTop: 20,
+  },
+  stopButton: {
     backgroundColor: colors.colors.error,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
+    marginRight: 10,
   },
   stopButtonText: {
+    color: colors.colors.textDark,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: colors.colors.warning,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  deleteButtonText: {
     color: colors.colors.textDark,
     fontSize: 16,
     fontWeight: '600',

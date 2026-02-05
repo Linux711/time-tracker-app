@@ -84,6 +84,15 @@ export const HomeScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
+  const handleDeleteActivity = async (activityId: string, activityName: string) => {
+    try {
+      await deleteActivity(activityId);
+      loadTodaySessions();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete activity');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Active Timer Display */}
@@ -92,7 +101,7 @@ export const HomeScreen: React.FC = () => {
           <TimerDisplay
             elapsedTime={elapsedTime}
             onStop={handleStopTimer}
-            onDelete={deleteActivity}
+            onDelete={handleDeleteActivity}
             activityName={activities.find(a => a.id === activeTimer.activityId)?.name}
             activityId={activeTimer.activityId}
             style={styles.timerDisplay}
