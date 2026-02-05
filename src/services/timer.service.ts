@@ -1,6 +1,14 @@
-import { v4 as uuidv4 } from 'uuid';
 import { StorageService } from './storage.service';
 import { Activity, Session, ActiveTimer } from '../types';
+
+// Simple UUID generator for React Native
+const generateId = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 export class TimerService {
   static async startTimer(activity: Activity): Promise<ActiveTimer> {
@@ -10,7 +18,7 @@ export class TimerService {
       throw new Error('A timer is already running');
     }
 
-    const sessionId = uuidv4();
+    const sessionId = generateId();
     const activeTimer: ActiveTimer = {
       activityId: activity.id,
       startTime: new Date().toISOString(),

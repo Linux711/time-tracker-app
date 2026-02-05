@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { StorageService } from '../services/storage.service';
 import { Activity } from '../types';
+
+// Simple UUID generator for React Native
+const generateId = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 export const useActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -27,7 +35,7 @@ export const useActivities = () => {
 
   const addActivity = useCallback(async (name: string, color: string, weeklyGoal?: number) => {
     const newActivity: Activity = {
-      id: uuidv4(),
+      id: generateId(),
       name,
       color,
       createdAt: new Date().toISOString(),

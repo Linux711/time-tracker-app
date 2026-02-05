@@ -25,10 +25,16 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   const [selectedColor, setSelectedColor] = useState('');
   const [weeklyGoal, setWeeklyGoal] = useState('');
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (name.trim() && selectedColor) {
-      const goal = weeklyGoal ? parseFloat(weeklyGoal) : undefined;
-      onAdd(name.trim(), selectedColor, goal);
+      try {
+        const goal = weeklyGoal ? parseFloat(weeklyGoal) : undefined;
+        await onAdd(name.trim(), selectedColor, goal);
+        handleClose(); // Reset state and close modal after successful save
+      } catch (error) {
+        // Error is handled by the parent component
+        console.error('Error saving activity:', error);
+      }
     }
   };
 
